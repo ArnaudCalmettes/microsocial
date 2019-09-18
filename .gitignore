@@ -25,3 +25,5 @@ dist/
 generated/
 .vendor/
 
+*.swo
+*.swp
