@@ -1,0 +1,17 @@
+create_table("reports") {
+	t.Column("id", "uuid", {primary: true})
+	t.Column("user_id", "uuid", {})
+	t.Column("subject_id", "uuid", {})
+	t.Column("message", "text", {})
+	t.Timestamps()
+}
+
+add_foreign_key("reports", "user_id", {"users": ["id"]}, {
+    "name": "reports_users_user_id_fk",
+    "on_delete": "CASCADE"
+})
+add_foreign_key("reports", "subject_id", {"users": ["id"]}, {
+    "name": "reports_users_subject_id_fk",
+    "on_delete": "CASCADE"
+})
+add_index("reports", "subject_id")

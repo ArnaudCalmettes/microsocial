@@ -11,7 +11,7 @@ import (
 func UsersList(c buffalo.Context) error {
 	tx, ok := c.Value("tx").(*pop.Connection)
 	if !ok {
-		return errors.WithStack(errors.New("no transaction found"))
+		return errors.WithStack(errors.New("No transaction found"))
 	}
 
 	users := &models.Users{}
@@ -33,7 +33,7 @@ func UsersList(c buffalo.Context) error {
 func UsersShow(c buffalo.Context) error {
 	tx, ok := c.Value("tx").(*pop.Connection)
 	if !ok {
-		return errors.WithStack(errors.New("no transaction found"))
+		return errors.WithStack(errors.New("No transaction found"))
 	}
 
 	user := &models.User{}
@@ -59,7 +59,7 @@ func UsersCreate(c buffalo.Context) error {
 
 	user := &models.User{}
 	if err := c.Bind(user); err != nil {
-		return errors.WithStack(err)
+		return c.Error(400, err)
 	}
 
 	verrs, err := user.Create(tx)
