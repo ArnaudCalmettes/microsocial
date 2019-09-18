@@ -19,25 +19,19 @@ type User struct {
 	Info      string    `json:"info" db:"info" fake:"{hipster.word}"`
 }
 
-// String is not required by pop and may be deleted
+// String converts a User to a JSON string
 func (u User) String() string {
 	ju, _ := json.Marshal(u)
 	return string(ju)
 }
 
-// Users is not required by pop and may be deleted
+// Users is a collection of User.
 type Users []User
 
-// String is not required by pop and may be deleted
+// String converts a Users slice to a JSON string
 func (u Users) String() string {
 	ju, _ := json.Marshal(u)
 	return string(ju)
-}
-
-// Validate gets run every time you call a "pop.Validate*" (pop.ValidateAndSave, pop.ValidateAndCreate, pop.ValidateAndUpdate) method.
-// This method is not required and may be deleted.
-func (u *User) Validate(tx *pop.Connection) (*validate.Errors, error) {
-	return validate.NewErrors(), nil
 }
 
 // ValidateCreate gets run every time you call "pop.ValidateAndCreate" method.
@@ -67,7 +61,6 @@ func (u *User) ValidateCreate(tx *pop.Connection) (*validate.Errors, error) {
 }
 
 // ValidateUpdate gets run every time you call "pop.ValidateAndUpdate" method.
-// This method is not required and may be deleted.
 func (u *User) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 	var err error
 	return validate.Validate(
@@ -77,7 +70,7 @@ func (u *User) ValidateUpdate(tx *pop.Connection) (*validate.Errors, error) {
 			Message: "Login %s is already taken",
 			Fn: func() bool {
 				var b bool
-				q := tx.Where("Login = ?", u.Login).Where("id != ?", u.ID)
+				q := tx.Where("login = ? AND id != ?", u.Login, u.ID)
 				b, err = q.Exists(u)
 				if err != nil {
 					return false

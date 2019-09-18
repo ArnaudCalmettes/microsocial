@@ -14,10 +14,11 @@ import (
 type Report struct {
 	ID        uuid.UUID `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
-	UserID    uuid.UUID `json:"user_id" db:"user_id"`
-	SubjectID uuid.UUID `json:"subject_id" db:"subject_id"`
-	Message   string    `json:"message" db:"message"`
+	ByID      uuid.UUID `json:"by_id" db:"by_id"`
+	By        *User     `json:"by,omitempty" db:"-" belongs_to:"user"`
+	AboutID   uuid.UUID `json:"about_id" db:"about_id"`
+	About     *User     `json:"about,omitempty" db:"-" belongs_to:"user"`
+	Info      string    `json:"info" db:"info"`
 }
 
 // String is not required by pop and may be deleted
@@ -38,14 +39,14 @@ func (r Reports) String() string {
 // Validate a Report
 func (r *Report) Validate(tx *pop.Connection) (*validate.Errors, error) {
 	return validate.Validate(
-		&validators.UUIDIsPresent{Field: r.UserID, Name: "UserID"},
-		&validators.UUIDIsPresent{Field: r.SubjectID, Name: "SubjectID"},
-		&validators.StringIsPresent{Field: r.Message, Name: "Message"},
+		&validators.UUIDIsPresent{Field: r.ByID, Name: "ByID"},
+		&validators.UUIDIsPresent{Field: r.AboutID, Name: "AboutID"},
+		&validators.StringIsPresent{Field: r.Info, Name: "Info"},
 		&validators.FuncValidator{
-			Field:   r.SubjectID.String(),
-			Name:    "SubjectID",
-			Message: "Can't report yourself",
-			Fn:      func() bool { return r.UserID != r.SubjectID },
+			Field:   r.AboutID.String(),
+			Name:    "AboutID",
+			Message: "Can't report yourself (about_id: %s)",
+			Fn:      func() bool { return r.ByID != r.AboutID },
 		},
 	), nil
 }

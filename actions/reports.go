@@ -16,7 +16,7 @@ func ReportsCreate(c buffalo.Context) error {
 	}
 
 	user_id, _ := getCredentials(c)
-	report.UserID = uuid.FromStringOrNil(user_id)
+	report.ByID = uuid.FromStringOrNil(user_id)
 
 	tx, ok := c.Value("tx").(*pop.Connection)
 	if !ok {

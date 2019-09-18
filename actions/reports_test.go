@@ -12,8 +12,8 @@ func (as *ActionSuite) Test_Reports_Create() {
 	subject := as.createRandomUser()
 	url := "/reports"
 	payload := map[string]string{
-		"subject_id": subject.ID.String(),
-		"message":    "This user is a jerk!",
+		"about_id": subject.ID.String(),
+		"info":     "This user is a jerk!",
 	}
 
 	// Unauthorized
@@ -37,10 +37,10 @@ func (as *ActionSuite) Test_Reports_Create() {
 	report := &models.Report{}
 	err = json.Unmarshal(resp.Body.Bytes(), report)
 	as.NoError(err)
-	as.NotZero(report.ID)
-	as.Equal(user.ID, report.UserID)
-	as.Equal(subject.ID, report.SubjectID)
-	as.Equal("This user is a jerk!", report.Message)
+	as.False(report.CreatedAt.IsZero())
+	as.Equal(user.ID, report.ByID)
+	as.Equal(subject.ID, report.AboutID)
+	as.Equal("This user is a jerk!", report.Info)
 
 	count, err := as.DB.Count("reports")
 	as.NoError(err)
@@ -50,7 +50,7 @@ func (as *ActionSuite) Test_Reports_Create() {
 func (as *ActionSuite) Test_Reports_List() {
 	user := as.createRandomUser()
 	other := as.createRandomUser()
-	messages := []string{
+	infos := []string{
 		"This user is a jerk",
 		"Really",
 		"Please do something",
@@ -59,11 +59,11 @@ func (as *ActionSuite) Test_Reports_List() {
 	}
 
 	// Create a bunch of reports
-	for _, message := range messages {
+	for _, info := range infos {
 		report := &models.Report{
-			UserID:    user.ID,
-			SubjectID: other.ID,
-			Message:   message,
+			ByID:    user.ID,
+			AboutID: other.ID,
+			Info:    info,
 		}
 		verrs, err := report.Create(as.DB)
 		as.NoError(err)
@@ -72,7 +72,7 @@ func (as *ActionSuite) Test_Reports_List() {
 
 	count, err := as.DB.Count("reports")
 	as.NoError(err)
-	as.Equal(len(messages), count)
+	as.Equal(len(infos), count)
 
 	url := "/reports"
 
@@ -94,5 +94,5 @@ func (as *ActionSuite) Test_Reports_List() {
 	err = json.Unmarshal(resp.Body.Bytes(), &reports)
 	as.NoError(err)
 
-	as.Equal(len(messages), len(reports))
+	as.Equal(len(infos), len(reports))
 }

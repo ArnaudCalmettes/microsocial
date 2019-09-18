@@ -74,5 +74,4 @@ func (ms *ModelSuite) Test_User_Create_UserExists() {
 	count, err = ms.DB.Count("users")
 	ms.NoError(err)
 	ms.Equal(1, count)
-
 }
