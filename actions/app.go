@@ -5,6 +5,7 @@ import (
 	"github.com/gobuffalo/envy"
 	forcessl "github.com/gobuffalo/mw-forcessl"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
+	tokenauth "github.com/gobuffalo/mw-tokenauth"
 	"github.com/unrolled/secure"
 
 	"github.com/ArnaudCalmettes/microsocial/models"
@@ -45,22 +46,31 @@ func App() *buffalo.App {
 
 		// Automatically redirect to SSL
 		app.Use(forceSSL())
-
-		// Log request parameters (filters apply).
 		app.Use(paramlogger.ParameterLogger)
-
-		// Set the request content type to JSON
 		app.Use(contenttype.Set("application/json"))
-
-		// Wraps each request in a transaction.
-		//  c.Value("tx").(*pop.Connection)
-		// Remove to disable this.
 		app.Use(popmw.Transaction(models.DB))
 
-		app.GET("/", HomeHandler)
+		app.GET("/fake_auth", CreateToken)
+
+		// JWT authentication middelware
+		auth_mw := tokenAuth()
+
+		users := app.Group("/users")
+		users.Use(auth_mw)
+		users.GET("/", UsersList)
+		users.POST("/", UsersCreate)
+		users.GET("/{user_id}", UsersShow)
+		users.PUT("/{user_id}", UsersUpdate)
+		users.DELETE("/{user_id}", UsersDestroy)
+		users.Middleware.Skip(auth_mw, UsersList)
+
 	}
 
 	return app
+}
+
+func tokenAuth() buffalo.MiddlewareFunc {
+	return tokenauth.New(tokenauth.Options{})
 }
 
 // forceSSL will return a middleware that will redirect an incoming request

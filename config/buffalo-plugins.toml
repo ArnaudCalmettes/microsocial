@@ -1,3 +1,15 @@
 [[plugin]]
   binary = "buffalo-pop"
   go_get = "github.com/gobuffalo/buffalo-pop"
+
+[[plugin]]
+  binary = "gofakeit"
+  go_get = "github.com/brianvoe/gofakeit"
+
+[[plugin]]
+  binary = "mw-tokenauth"
+  go_get = "github.com/gobuffalo/mw-tokenauth"
+
+[[plugin]]
+  binary = "nulls"
+  go_get = "github.com/gobuffalo/nulls"
