@@ -88,9 +88,9 @@ token that you can pass as a `Authentication: Bearer <TOKEN>` header.
 Let's define a couple env vars for the rest of this demo:
 
 ```bash
-$ ADMIN_TOKEN=`curl http://localhost:3000/fake_auth/JudgeDredd | sed 's/\"//g'`
-$ ALICE_TOKEN=`curl http://localhost:3000/fake_auth/Alice | sed 's/\"//g'`
-$ BOB_TOKEN=`curl http://localhost:3000/fake_auth/Bob | sed 's/\"//g'`
+$ ADMIN_TOKEN=`curl http://$URL/fake_auth/JudgeDredd | sed 's/\"//g'`
+$ ALICE_TOKEN=`curl http://$URL/fake_auth/Alice | sed 's/\"//g'`
+$ BOB_TOKEN=`curl http://$URL/fake_auth/Bob | sed 's/\"//g'`
 $ AS_ADMIN="Authorization: Bearer $ADMIN_TOKEN"
 $ AS_ALICE="Authorization: Bearer $ALICE_TOKEN"
 $ AS_BOB="Authorization: Bearer $BOB_TOKEN"
@@ -105,5 +105,58 @@ parameter when generating it. For instance:
 * `?exp=10s` will generate a token that will expire in 10 seconds,
 * `?exp=15m` for 15 minutes,
 * `?exp=3h` for 3 hours.
+
+# Basic user CRUD operations
+
+The `/users` endpoint supports the classic CRUD operations:
+
+* `GET /users` lists existing users (authentication not needed),
+* `POST /users` creates a new user (authentication not needed),
+* `GET /users/{user_id}` shows detailed user information, we'll see that later,
+* `PUT /users/{user_id}` modifies an existing user,
+* `DELETE /users/{user_id}` deletes a user,
+
+We won't show everything here. Let's demo this by trying to change Bob's profile information.
+
+```bash
+$ curl -X PUT -d '{"info": "Not a sponge"}' "http://$URL/users/$BOB_ID"
+{"error":"token not found in request","status":401}
+```
+
+Authentication is required. Let's try using Alice's token:
+
+```bash
+$ curl -X PUT -H $AS_ALICE -d '{"info": "Not a sponge"}' "http://$URL/users/$BOB_ID"
+{"error":"Forbidden","status":403}
+```
+
+Of course, Alice can't modify Bob's information. Let's retry as Bob:
+
+```bash
+curl -X PUT -H $AS_BOB -d '{"info": "Not a sponge"}' "http://$URL/users/$BOB_ID"
+{
+    "id": "d9e24321-cd55-4349-85f8-047bec35175c",
+    "created_at": "2019-09-19T18:44:13.407875Z",
+    "updated_at": "2019-09-19T20:32:36.739483+02:00",
+    "login": "Bob",
+    "info": "Not a sponge",
+    "admin": false
+}
+```
+
+Success. This call can be used to modify:
+
+* login (provided that the new login isn't already taken)
+* info
+* admin rights (although promotion requires admin credentials)
+
+For instance, Bob can't escalate his own privileges:
+
+```bash
+curl -X PUT -H $AS_BOB -d '{"admin": true}' "http://$URL/users/$BOB_ID"
+{"error":"I see what you did there!","status":403}
+```
+
+## Friends and friend requests
 
 **To Be Continued...**

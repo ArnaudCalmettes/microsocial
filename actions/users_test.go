@@ -119,7 +119,7 @@ func (as *ActionSuite) Test_Users_Create() {
 	// Insufficient data
 	req := as.JSON("/users")
 	resp := req.Post(map[string]string{})
-	as.Equal(400, resp.Code)
+	as.Equal(409, resp.Code)
 
 	// Valid request
 	resp = req.Post(map[string]string{"login": "toto"})
@@ -127,7 +127,7 @@ func (as *ActionSuite) Test_Users_Create() {
 
 	// Already exists
 	resp = req.Post(map[string]string{"login": "toto"})
-	as.Equal(400, resp.Code)
+	as.Equal(409, resp.Code)
 }
 
 func (as *ActionSuite) Test_Users_Update() {
@@ -174,6 +174,10 @@ func (as *ActionSuite) Test_Users_Update() {
 	resp = req.Put(map[string]string{"login": other.Login})
 	as.Equal(409, resp.Code)
 
+	// Try to escalate privileges
+	resp = req.Put(map[string]bool{"admin": true})
+	as.Equal(403, resp.Code)
+
 	// Use admin credentials
 	token, err = newToken(admin, time.Minute)
 	as.NoError(err)
@@ -185,6 +189,10 @@ func (as *ActionSuite) Test_Users_Update() {
 	err = as.DB.Find(actual, user.ID)
 	as.NoError(err)
 	as.Equal("<Judge Dredd has pacified this info>", actual.Info)
+
+	// Promote user to admin
+	resp = req.Put(map[string]bool{"admin": true})
+	as.Equal(200, resp.Code)
 
 	// Evil admin tries to change the user's login to another, existing one
 	resp = req.Put(map[string]string{"login": other.Login})

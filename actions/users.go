@@ -105,8 +105,15 @@ func UsersUpdate(c buffalo.Context) error {
 	}
 
 	if err := c.Bind(user); err != nil {
-		return errors.WithStack(err)
+		return c.Error(400, err)
 	}
+
+	// Prevent users from escalating their own privileges.
+	// Only admins can do that.
+	if user.Admin && !auth.Admin {
+		return c.Error(403, errors.New("I see what you did there!"))
+	}
+
 	verrs, err := user.Update(tx)
 	if err != nil {
 		return errors.WithStack(err)
