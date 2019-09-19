@@ -1,35 +1,109 @@
-# Welcome to Buffalo!
+# Microsocial
 
-Thank you for choosing Buffalo for your web development needs.
+This is a toy social network-like REST API written in Golang, using Buffalo.
 
-## Database Setup
+It is currently a Work In Progress.
 
-It looks like you chose to set up your application using a database! Fantastic!
+# Step-by-step demo
 
-The first thing you need to do is open up the "database.yml" file and edit it to use the correct usernames, passwords, hosts, etc... that are appropriate for your environment.
+The modelization is completely finished. I'm using this step-by-step demo as a guide
+to develop the API.
 
-You will also need to make sure that **you** start/install the database of your choice. Buffalo **won't** install and start it for you.
+## Setting up the stage
 
-### Create Your Databases
+The app is currently usable in "development mode" (the Docker release will come soon).
+To set it up, update "database.yml" to point to a valid PostgreSQL database with the right
+credentials.
 
-Ok, so you've edited the "database.yml" file and started your database, now Buffalo can create the databases in that file for you:
+Let's start by defining a bunch of users, using POST requests on the `/users` endpoint:
 
-	$ buffalo pop create -a
+```bash
+$ URL="localhost:3000"
+$ curl -d '{"login": "JudgeDredd", "admin": true, "info": "Pacificator Maximus"}' http://$URL/users/
+$ curl -d '{"login": "Alice", "info": "Live from Wonderland"}' http://$URL/users/
+$ curl -d '{"login": "Bob"}' http://$URL/users/
+```
 
-## Starting the Application
+Edge cases:
 
-Buffalo ships with a command that will watch your application and automatically rebuild the Go binary and any assets for you. To do that run the "buffalo dev" command:
+* If a user login is already taken, you get a 409 error.
 
-	$ buffalo dev
+So we've defined an admin and two regular users. Let's list them:
 
-If you point your browser to [http://127.0.0.1:3000](http://127.0.0.1:3000) you should see a "Welcome to Buffalo!" page.
+```bash
+$ curl http://$URL/users/ | python3 -m json.tool
+[
+    {
+        "id": "9b9f01f4-34e7-4cc3-8837-b1ade476f72e",
+        "created_at": "2019-09-19T18:42:53.971323Z",
+        "updated_at": "2019-09-19T18:42:53.97133Z",
+        "login": "JudgeDredd",
+        "info": "Pacificator Maximus",
+        "admin": true
+    },
+    {
+        "id": "2acc6f8a-42ec-4f4b-bfe8-149ed0a83372",
+        "created_at": "2019-09-19T18:43:52.715929Z",
+        "updated_at": "2019-09-19T18:43:52.715934Z",
+        "login": "Alice",
+        "info": "Live from Wonderland",
+        "admin": false
+    },
+    {
+        "id": "d9e24321-cd55-4349-85f8-047bec35175c",
+        "created_at": "2019-09-19T18:44:13.407875Z",
+        "updated_at": "2019-09-19T18:44:13.407881Z",
+        "login": "Bob",
+        "info": "",
+        "admin": false
+    }
+]
+```
 
-**Congratulations!** You now have your Buffalo application up and running.
+Notes:
 
-## What Next?
+* All list-like calls (such as this one) support pagination: they accept
+`page` and `per_page` GET parameters, and return pagination detail in an
+`X-Pagination` header.
 
-We recommend you heading over to [http://gobuffalo.io](http://gobuffalo.io) and reviewing all of the great documentation there.
+... Aaaaand that's pretty much all we can do without authentication.
 
-Good luck!
+Let's save the IDs in env variables for later:
 
-[Powered by Buffalo](http://gobuffalo.io)
+```bash
+$ ADMIN_ID=9b9f01f4-34e7-4cc3-8837-b1ade476f72e
+$ ALICE_ID=2acc6f8a-42ec-4f4b-bfe8-149ed0a83372
+$ BOB_ID=d9e24321-cd55-4349-85f8-047bec35175c
+```
+
+## Authentication
+
+Authentication is basically out of the scope for this API, but there is a need
+for some basic role-management in the rest of it, so I wrote a simple
+"fake" auth system based on JWT tokens.
+
+Basically, if you place a GET request on the `/fake_auth/{login}` endpoint, you get a
+token that you can pass as a `Authentication: Bearer <TOKEN>` header.
+
+Let's define a couple env vars for the rest of this demo:
+
+```bash
+$ ADMIN_TOKEN=`curl http://localhost:3000/fake_auth/JudgeDredd | sed 's/\"//g'`
+$ ALICE_TOKEN=`curl http://localhost:3000/fake_auth/Alice | sed 's/\"//g'`
+$ BOB_TOKEN=`curl http://localhost:3000/fake_auth/Bob | sed 's/\"//g'`
+$ AS_ADMIN="Authorization: Bearer $ADMIN_TOKEN"
+$ AS_ALICE="Authorization: Bearer $ALICE_TOKEN"
+$ AS_BOB="Authorization: Bearer $BOB_TOKEN"
+```
+
+Now, we can use `curl -H $AS_ALICE ...` to interact with the API on behalf of Alice, and so
+on.
+
+Note: the default duration of the tokens is 24 hours. You can change this by using an `exp` GET
+parameter when generating it. For instance:
+
+* `?exp=10s` will generate a token that will expire in 10 seconds,
+* `?exp=15m` for 15 minutes,
+* `?exp=3h` for 3 hours.
+
+**To Be Continued...**

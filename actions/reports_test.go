@@ -20,10 +20,10 @@ func (as *ActionSuite) Test_Reports_Create() {
 	resp := as.JSON(url).Post(payload)
 	as.Equal(401, resp.Code)
 
-	user_token, err := newToken(user.ID.String(), false, time.Minute)
+	user_token, err := newToken(user, time.Minute)
 	as.NoError(err)
 
-	subject_token, err := newToken(subject.ID.String(), false, time.Minute)
+	subject_token, err := newToken(subject, time.Minute)
 	as.NoError(err)
 
 	// "Subject" tries to file a report on himself
@@ -50,6 +50,10 @@ func (as *ActionSuite) Test_Reports_Create() {
 func (as *ActionSuite) Test_Reports_List() {
 	user := as.createRandomUser()
 	other := as.createRandomUser()
+	admin := as.createRandomUser()
+	admin.Admin = true
+	admin.Update(as.DB)
+
 	infos := []string{
 		"This user is a jerk",
 		"Really",
@@ -81,12 +85,12 @@ func (as *ActionSuite) Test_Reports_List() {
 	as.Equal(401, resp.Code)
 
 	// Non-admin
-	token, err := newToken(user.ID.String(), false, time.Minute)
+	token, err := newToken(user, time.Minute)
 	resp = as.createAuthRequest(url, token).Get()
 	as.Equal(403, resp.Code)
 
 	// Anybody with admin credentials
-	token, err = newToken("0", true, time.Minute)
+	token, err = newToken(admin, time.Minute)
 	resp = as.createAuthRequest(url, token).Get()
 	as.Equal(200, resp.Code)
 

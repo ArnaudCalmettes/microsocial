@@ -40,18 +40,32 @@ func UsersShow(c buffalo.Context) error {
 	if err := tx.Find(user, c.Param("user_id")); err != nil {
 		return c.Error(404, err)
 	}
+
+	auth := getCredentials(c)
+
+	// Add extra (friends & friend requests) info
+	if auth.ID == user.ID || auth.Admin {
+		if err := user.FetchFriends(tx); err != nil {
+			return c.Error(500, err)
+		}
+		if err := user.FetchRequests(tx); err != nil {
+			return c.Error(500, err)
+		}
+	}
+
+	// Add extra moderation info
+	if auth.Admin {
+		if err := user.FetchReports(tx); err != nil {
+			return c.Error(500, err)
+		}
+	}
+
 	return c.Render(200, r.JSON(user))
 
 }
 
 // UsersCreate creates a new user
 func UsersCreate(c buffalo.Context) error {
-	_, is_admin := getCredentials(c)
-
-	if !is_admin {
-		return c.Error(403, errors.New("Forbidden"))
-	}
-
 	tx, ok := c.Value("tx").(*pop.Connection)
 	if !ok {
 		return errors.WithStack(errors.New("no transaction found"))
@@ -75,22 +89,21 @@ func UsersCreate(c buffalo.Context) error {
 
 // UsersUpdate updates user information
 func UsersUpdate(c buffalo.Context) error {
-	id, is_admin := getCredentials(c)
-	user_id := c.Param("user_id")
-
-	if id != user_id && !is_admin {
-		return c.Error(403, errors.New("Forbidden"))
-	}
-
 	tx, ok := c.Value("tx").(*pop.Connection)
 	if !ok {
 		return errors.WithStack(errors.New("no transaction found"))
 	}
 
 	user := &models.User{}
-	if err := tx.Find(user, user_id); err != nil {
+	if err := tx.Find(user, c.Param("user_id")); err != nil {
 		return c.Error(404, errors.New("Not Found"))
 	}
+
+	auth := getCredentials(c)
+	if auth.ID != user.ID && !auth.Admin {
+		return c.Error(403, errors.New("Forbidden"))
+	}
+
 	if err := c.Bind(user); err != nil {
 		return errors.WithStack(err)
 	}
@@ -106,23 +119,21 @@ func UsersUpdate(c buffalo.Context) error {
 
 // UsersDestroy deletes a user from the DB
 func UsersDestroy(c buffalo.Context) error {
-	id, is_admin := getCredentials(c)
-	user_id := c.Param("user_id")
-
-	if id != user_id && !is_admin {
-		return c.Error(403, errors.New("Forbidden"))
-	}
-
 	tx, ok := c.Value("tx").(*pop.Connection)
 	if !ok {
 		return errors.WithStack(errors.New("no transaction found"))
 	}
 
 	user := &models.User{}
-
-	if err := tx.Find(user, user_id); err != nil {
+	if err := tx.Find(user, c.Param("user_id")); err != nil {
 		return c.Error(404, err)
 	}
+
+	auth := getCredentials(c)
+	if auth.ID != user.ID && !auth.Admin {
+		return c.Error(403, errors.New("Forbidden"))
+	}
+
 	if err := tx.Destroy(user); err != nil {
 		return errors.WithStack(err)
 	}

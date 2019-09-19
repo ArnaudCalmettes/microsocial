@@ -17,6 +17,7 @@ type User struct {
 	UpdatedAt   time.Time      `json:"updated_at" db:"updated_at" fake:"skip"`
 	Login       string         `json:"login" db:"login" fake:"{person.first}{person.last}"`
 	Info        string         `json:"info" db:"info" fake:"{hipster.word}"`
+	Admin       bool           `json:"admin" db:"admin" fake:"skip"`
 	Friends     Users          `json:"friends,omitempty" db:"-"`
 	OutRequests FriendRequests `json:"pending_requests,omitempty" db:"-" order_by:"created_at desc"`
 	InRequests  FriendRequests `json:"incoming_requests,omitempty" db:"-" order_by:"created_at desc"`
@@ -144,5 +145,5 @@ func (u *User) FetchRequests(tx *pop.Connection) error {
 
 // FetchReports looks up any reports made about a user
 func (u *User) FetchReports(tx *pop.Connection) error {
-	return tx.Eager("By").Where("subject_id = ?", u.ID).All(&u.Reports)
+	return tx.Eager("By").Where("about_id = ?", u.ID).All(&u.Reports)
 }

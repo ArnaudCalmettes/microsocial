@@ -50,7 +50,7 @@ func App() *buffalo.App {
 		app.Use(contenttype.Set("application/json"))
 		app.Use(popmw.Transaction(models.DB))
 
-		app.GET("/fake_auth", CreateToken)
+		app.GET("/fake_auth/{login}", LoginAsUser)
 
 		// JWT authentication middleware
 		auth_mw := tokenAuth()
@@ -63,13 +63,12 @@ func App() *buffalo.App {
 		users.PUT("/{user_id}", UsersUpdate)
 		users.DELETE("/{user_id}", UsersDestroy)
 
-		users.Middleware.Skip(auth_mw, UsersList)
+		users.Middleware.Skip(auth_mw, UsersList, UsersCreate)
 
 		reports := app.Group("/reports")
 		reports.Use(auth_mw)
 		reports.POST("/", ReportsCreate)
 		reports.GET("/", ReportsList)
-
 	}
 
 	return app

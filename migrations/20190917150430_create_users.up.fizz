@@ -1,6 +1,7 @@
 create_table("users") {
     t.Column("id", "uuid", {primary: true})
+	t.Timestamps()
     t.Column("login", "string", {})
     t.Column("info", "string", {})
-	t.Timestamps()
+    t.Column("admin", "bool", {})
 }

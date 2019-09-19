@@ -96,10 +96,11 @@ ALTER TABLE public.schema_migration OWNER TO buffalo;
 
 CREATE TABLE public.users (
     id uuid NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     login character varying(255) NOT NULL,
     info character varying(255) NOT NULL,
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    admin boolean NOT NULL
 );
 
 

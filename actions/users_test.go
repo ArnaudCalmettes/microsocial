@@ -8,6 +8,7 @@ import (
 	"github.com/ArnaudCalmettes/microsocial/models"
 	"github.com/brianvoe/gofakeit"
 	"github.com/gobuffalo/httptest"
+	"github.com/gofrs/uuid"
 )
 
 func (as *ActionSuite) createRandomUser() *models.User {
@@ -36,7 +37,7 @@ func (as *ActionSuite) checkUsers(expected, actual models.Users) {
 				match = a
 			}
 		}
-		if match == (models.User{}) {
+		if match.ID == uuid.Nil {
 			msg := fmt.Sprintf("User %v not in list", e)
 			as.Fail(msg)
 		}
@@ -89,6 +90,7 @@ func (as *ActionSuite) Test_Users_List_Paginated() {
 
 func (as *ActionSuite) Test_Users_Show() {
 	user := as.createRandomUser()
+	other := as.createRandomUser()
 	user_url := fmt.Sprintf("/users/%s", user.ID)
 	nonexistent_url := "/users/non-existent"
 
@@ -97,7 +99,7 @@ func (as *ActionSuite) Test_Users_Show() {
 	as.Equal(401, resp.Code)
 
 	// "Anonymous" token (anybody without admin credentials)
-	token, err := newToken("0", false, time.Minute)
+	token, err := newToken(other, time.Minute)
 	as.NoError(err)
 	resp = as.createAuthRequest(nonexistent_url, token).Get()
 	as.Equal(404, resp.Code)
@@ -114,29 +116,10 @@ func (as *ActionSuite) Test_Users_Show() {
 }
 
 func (as *ActionSuite) Test_Users_Create() {
-	// Unauthorized
-	resp := as.JSON("/users").Post(map[string]string{})
-	as.Equal(401, resp.Code)
-
-	var token string
-	var err error
-
-	// Insufficient credentials
-	token, err = newToken("0", false, time.Minute)
-	as.NoError(err)
-
-	req := as.createAuthRequest("/users", token)
-	resp = req.Post(map[string]string{})
-	as.Equal(403, resp.Code)
-
-	token, err = newToken("0", true, time.Minute)
-	as.NoError(err)
-
-	req = as.createAuthRequest("/users", token)
-
-	// Missing data
-	resp = req.Post(map[string]string{})
-	as.Equal(409, resp.Code)
+	// Insufficient data
+	req := as.JSON("/users")
+	resp := req.Post(map[string]string{})
+	as.Equal(400, resp.Code)
 
 	// Valid request
 	resp = req.Post(map[string]string{"login": "toto"})
@@ -144,15 +127,19 @@ func (as *ActionSuite) Test_Users_Create() {
 
 	// Already exists
 	resp = req.Post(map[string]string{"login": "toto"})
-	as.Equal(409, resp.Code)
+	as.Equal(400, resp.Code)
 }
 
 func (as *ActionSuite) Test_Users_Update() {
 	var token string
 	var err error
 
-	users := as.createRandomUsers(2)
-	user, other := users[0], users[1]
+	user := as.createRandomUser()
+	other := as.createRandomUser()
+	admin := as.createRandomUser()
+	admin.Admin = true
+	admin.Update(as.DB)
+
 	url := fmt.Sprintf("/users/%s", user.ID)
 
 	// Unauthorized
@@ -160,14 +147,14 @@ func (as *ActionSuite) Test_Users_Update() {
 	as.Equal(401, resp.Code)
 
 	// Use wrong, unprivileged user credentials
-	token, err = newToken(other.ID.String(), false, time.Minute)
+	token, err = newToken(other, time.Minute)
 	as.NoError(err)
 	req := as.createAuthRequest(url, token)
 	resp = req.Put(map[string]string{})
 	as.Equal(403, resp.Code)
 
 	// Use authorized user credentials
-	token, err = newToken(user.ID.String(), false, time.Minute)
+	token, err = newToken(user, time.Minute)
 	as.NoError(err)
 	req = as.createAuthRequest(url, token)
 
@@ -188,7 +175,7 @@ func (as *ActionSuite) Test_Users_Update() {
 	as.Equal(409, resp.Code)
 
 	// Use admin credentials
-	token, err = newToken("0", true, time.Minute)
+	token, err = newToken(admin, time.Minute)
 	as.NoError(err)
 	req = as.createAuthRequest(url, token)
 
@@ -214,8 +201,12 @@ func (as *ActionSuite) Test_Users_Delete() {
 	var token string
 	var err error
 
-	users := as.createRandomUsers(2)
-	user, other := users[0], users[1]
+	user := as.createRandomUser()
+	other := as.createRandomUser()
+	admin := as.createRandomUser()
+	admin.Admin = true
+	admin.Update(as.DB)
+
 	url := fmt.Sprintf("/users/%s", user.ID)
 
 	// Unauthorized
@@ -223,14 +214,14 @@ func (as *ActionSuite) Test_Users_Delete() {
 	as.Equal(401, resp.Code)
 
 	// Use wrong, unprivileged user credentials
-	token, err = newToken(other.ID.String(), false, time.Minute)
+	token, err = newToken(other, time.Minute)
 	as.NoError(err)
 	req := as.createAuthRequest(url, token)
 	resp = req.Delete()
 	as.Equal(403, resp.Code)
 
 	// Use authorized user credentials
-	token, err = newToken(user.ID.String(), false, time.Minute)
+	token, err = newToken(user, time.Minute)
 	as.NoError(err)
 	req = as.createAuthRequest(url, token)
 
@@ -239,7 +230,7 @@ func (as *ActionSuite) Test_Users_Delete() {
 	as.Equal(200, resp.Code)
 
 	// Use admin credentials
-	token, err = newToken("0", true, time.Minute)
+	token, err = newToken(admin, time.Minute)
 	as.NoError(err)
 	req = as.createAuthRequest(url, token)
 

@@ -4,24 +4,23 @@ import (
 	"github.com/ArnaudCalmettes/microsocial/models"
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/pop"
-	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 )
 
 // ReportsCreate reports given user
 func ReportsCreate(c buffalo.Context) error {
+	tx, ok := c.Value("tx").(*pop.Connection)
+	if !ok {
+		return errors.WithStack(errors.New("No transaction found"))
+	}
+
 	report := &models.Report{}
 	if err := c.Bind(report); err != nil {
 		return c.Error(400, err)
 	}
 
-	user_id, _ := getCredentials(c)
-	report.ByID = uuid.FromStringOrNil(user_id)
-
-	tx, ok := c.Value("tx").(*pop.Connection)
-	if !ok {
-		return errors.WithStack(errors.New("No transaction found"))
-	}
+	auth := getCredentials(c)
+	report.ByID = auth.ID
 
 	verrs, err := report.Create(tx)
 	if err != nil {
@@ -36,14 +35,14 @@ func ReportsCreate(c buffalo.Context) error {
 
 // ReportsList lists available reports
 func ReportsList(c buffalo.Context) error {
-	_, is_admin := getCredentials(c)
-	if !is_admin {
-		return c.Error(403, errors.New("Forbidden"))
-	}
-
 	tx, ok := c.Value("tx").(*pop.Connection)
 	if !ok {
 		return errors.WithStack(errors.New("no transaction found"))
+	}
+
+	auth := getCredentials(c)
+	if !auth.Admin {
+		return c.Error(403, errors.New("Forbidden"))
 	}
 
 	reports := &models.Reports{}

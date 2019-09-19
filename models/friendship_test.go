@@ -47,14 +47,14 @@ func (ms *ModelSuite) Test_FriendRequest_Accept() {
 	user := ms.createRandomUser()
 	other := ms.createRandomUser()
 
-	request, err := user.SendFriendRequest(ms.DB, other, "")
+	request, err := user.SendRequest(ms.DB, other, "")
 	ms.NoError(err)
 
 	err = request.Accept(ms.DB)
 	ms.NoError(err)
 	ms.Equal("ACCEPTED", request.Status)
 
-	count, err = ms.DB.Count("friendships")
+	count, err := ms.DB.Count("friendships")
 	ms.NoError(err)
 	ms.Equal(2, count)
 
@@ -73,7 +73,7 @@ func (ms *ModelSuite) Test_FriendRequest_Decline() {
 	user := ms.createRandomUser()
 	other := ms.createRandomUser()
 
-	request, err := user.SendFriendRequest(ms.DB, other, "")
+	request, err := user.SendRequest(ms.DB, other, "")
 	ms.NoError(err)
 
 	err = request.Decline(ms.DB)

@@ -1,19 +1,21 @@
 package actions
 
 import (
-	"strconv"
 	"time"
 
+	"github.com/ArnaudCalmettes/microsocial/models"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
+	"github.com/gobuffalo/pop"
+	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 )
 
-func newToken(id string, is_admin bool, exp time.Duration) (string, error) {
+func newToken(u *models.User, exp time.Duration) (string, error) {
 	claims := jwt.MapClaims{}
-	claims["id"] = id
-	claims["admin"] = is_admin
+	claims["id"] = u.ID.String()
+	claims["admin"] = u.Admin
 	claims["exp"] = time.Now().Add(exp).Unix()
 	secret, err := envy.MustGet("JWT_SECRET")
 	if err != nil {
@@ -23,39 +25,39 @@ func newToken(id string, is_admin bool, exp time.Duration) (string, error) {
 	return token.SignedString([]byte(secret))
 }
 
-func getCredentials(c buffalo.Context) (id string, is_admin bool) {
-	claims, _ := c.Value("claims").(jwt.MapClaims)
-	id, _ = claims["id"].(string)
-	is_admin, _ = claims["admin"].(bool)
-	return
+func getCredentials(c buffalo.Context) *models.User {
+	claims := c.Value("claims").(jwt.MapClaims)
+	return &models.User{
+		ID:    uuid.FromStringOrNil(claims["id"].(string)),
+		Admin: claims["admin"].(bool),
+	}
 }
 
-// CreateToken creates a "fake" auth token
-func CreateToken(c buffalo.Context) error {
-	var id, admin, exp string
-	if id = c.Param("id"); id == "" {
-		id = "0" // Anonymous user by default
-	}
-	if admin = c.Param("admin"); admin == "" {
-		admin = "0" // Non-admin by default
-	}
-	if exp = c.Param("exp"); exp == "" {
-		exp = "15m"
+func LoginAsUser(c buffalo.Context) error {
+	tx, ok := c.Value("tx").(*pop.Connection)
+	if !ok {
+		return errors.WithStack(errors.New("No transaction found"))
 	}
 
-	is_admin, err := strconv.ParseBool(admin)
-	if err != nil {
-		return c.Error(400, err)
+	// Parse duration
+	exp_str := c.Param("exp")
+	if exp_str == "" {
+		exp_str = "24h"
 	}
-	duration, err := time.ParseDuration(exp)
+	exp, err := time.ParseDuration(exp_str)
 	if err != nil {
 		return c.Error(400, err)
 	}
 
-	token, err := newToken(id, is_admin, duration)
+	u := &models.User{}
+	if err := tx.Where("login = ?", c.Param("login")).First(u); err != nil {
+		return c.Error(404, err)
+	}
+
+	token, err := newToken(u, exp)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	return c.Render(200, r.JSON(map[string]string{"token": token}))
+	return c.Render(200, r.JSON(token))
 }
