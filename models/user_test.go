@@ -1,6 +1,8 @@
 package models
 
-import "github.com/brianvoe/gofakeit"
+import (
+	"github.com/brianvoe/gofakeit"
+)
 
 func (ms *ModelSuite) createRandomUser() *User {
 	u := &User{}
