@@ -68,8 +68,13 @@ func App() *buffalo.App {
 		users.GET("/{user_id}", UsersShow)
 		users.PUT("/{user_id}", UsersUpdate)
 		users.DELETE("/{user_id}", UsersDestroy)
-
+		users.POST("/{user_id}/friend_request", FriendRequestsCreate)
 		users.Middleware.Skip(auth_mw, UsersList, UsersCreate)
+
+		frs := app.Group("/friend_requests")
+		frs.Use(auth_mw)
+		frs.GET("/{request_id}/accept", FriendRequestsAccept)
+		frs.GET("/{request_id}/decline", FriendRequestsDecline)
 
 		reports := app.Group("/reports")
 		reports.Use(auth_mw)

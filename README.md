@@ -106,7 +106,7 @@ parameter when generating it. For instance:
 * `?exp=15m` for 15 minutes,
 * `?exp=3h` for 3 hours.
 
-# Basic user CRUD operations
+## Basic user CRUD operations
 
 The `/users` endpoint supports the classic CRUD operations:
 
@@ -158,5 +158,134 @@ curl -X PUT -H $AS_BOB -d '{"admin": true}' "http://$URL/users/$BOB_ID"
 ```
 
 ## Friends and friend requests
+
+Let's suppose Bob wants to become friends with Alice. He can place a friend request
+by sending a POST to `/users/{user_id}/friend_request`.
+
+```bash
+$ curl -H $AS_BOB -d '{"message": "Please be my friend."}' \
+    http://$URL/users/$ALICE_ID/friend_request
+```
+
+The request is visible as a "pending" request for Bob when he consults his profile,
+and as an "incoming" request for Alice on her own profile:
+
+```bash
+$ curl -H $AS_BOB http://$URL/users/$BOB_ID |python3 -m json.tool
+{
+    "id": "d9e24321-cd55-4349-85f8-047bec35175c",
+    "created_at": "2019-09-19T18:44:13.407875Z",
+    "updated_at": "2019-09-19T20:32:36.739483Z",
+    "login": "Bob",
+    "info": "Not a sponge",
+    "admin": false,
+    "pending_requests": [
+        {
+            "id": "0f121386-f0cf-4f55-bb33-66a072d18801",
+            "created_at": "2019-09-19T21:47:33.15393Z",
+            "updated_at": "2019-09-19T21:47:33.153936Z",
+            "to": {
+                "id": "2acc6f8a-42ec-4f4b-bfe8-149ed0a83372",
+                "created_at": "2019-09-19T18:43:52.715929Z",
+                "updated_at": "2019-09-19T18:43:52.715934Z",
+                "login": "Alice",
+                "info": "Live from Wonderland",
+                "admin": false
+            },
+            "message": "Please be my friend.",
+            "status": "PENDING"
+        }
+    ]
+}
+$ curl -H $AS_ALICE http://$URL/users/$ALICE_ID  |python3 -m json.tool
+{
+    "id": "2acc6f8a-42ec-4f4b-bfe8-149ed0a83372",
+    "created_at": "2019-09-19T18:43:52.715929Z",
+    "updated_at": "2019-09-19T18:43:52.715934Z",
+    "login": "Alice",
+    "info": "Live from Wonderland",
+    "admin": false,
+    "incoming_requests": [
+        {
+            "id": "0f121386-f0cf-4f55-bb33-66a072d18801",
+            "created_at": "2019-09-19T21:47:33.15393Z",
+            "updated_at": "2019-09-19T21:47:33.153936Z",
+            "from": {
+                "id": "d9e24321-cd55-4349-85f8-047bec35175c",
+                "created_at": "2019-09-19T18:44:13.407875Z",
+                "updated_at": "2019-09-19T20:32:36.739483Z",
+                "login": "Bob",
+                "info": "Not a sponge",
+                "admin": false
+            },
+            "message": "Please be my friend.",
+            "status": "PENDING"
+        }
+    ]
+}
+```
+
+Please note that this information is **private**, i.e. it is kept
+invisible to everybody (including Bob) except Alice (and admins) on Alice's profile:
+
+```bash
+$ curl -H $AS_BOB http://$URL/users/$ALICE_ID |python3 -m json.tool
+{
+    "id": "2acc6f8a-42ec-4f4b-bfe8-149ed0a83372",
+    "created_at": "2019-09-19T18:43:52.715929Z",
+    "updated_at": "2019-09-19T18:43:52.715934Z",
+    "login": "Alice",
+    "info": "Live from Wonderland",
+    "admin": false
+}
+```
+
+Also, not shown here:
+
+* Bob can't request himself as a friend,
+* Bob can't make friend requests to his friends,
+* Bob can have only one pending friend request to Alice:
+he can make a second one only if she declines the first one.
+
+Alice (and only her, not even admins) can either:
+
+* Accept (`GET /friend_requests/{request_id}/accept`)
+* Decline (`GET /friend_requests/{request_id}/decline`)
+
+Let's accept it, and see that Bob and Alice are now friends:
+
+```bash
+$ curl -H $AS_ALICE http://$URL/friend_requests/0f121386-f0cf-4f55-bb33-66a072d18801/accept
+$ curl -H $AS_ALICE http://$URL/users/$ALICE_ID | python3 -m json.tool
+{
+    "id": "2acc6f8a-42ec-4f4b-bfe8-149ed0a83372",
+    "created_at": "2019-09-19T18:43:52.715929Z",
+    "updated_at": "2019-09-19T18:43:52.715934Z",
+    "login": "Alice",
+    "info": "Live from Wonderland",
+    "admin": false,
+    "friends": [
+        {
+            "id": "d9e24321-cd55-4349-85f8-047bec35175c",
+            "created_at": "2019-09-19T18:44:13.407875Z",
+            "updated_at": "2019-09-19T20:32:36.739483Z",
+            "login": "Bob",
+            "info": "Not a sponge",
+            "admin": false
+        }
+    ]
+}
+```
+
+**Note:** This bidirectional, many-to-many relationship, is modelled as two distinct
+lines within the same table (one for Bob to Alice, and one for Alice to Bob).
+This design choice is debatable (friendships take more space in the database),
+however it results in simpler code. [More info
+here](https://stackoverflow.com/questions/10807900/how-to-store-bidirectional-relationships-in-a-rdbms-like-mysql).
+
+**TODO:**
+
+* add "unfriend" feature.
+* write auto tests for this use-case.
 
 **To Be Continued...**
