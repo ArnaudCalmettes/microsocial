@@ -14,15 +14,15 @@ func FriendRequestsCreate(c buffalo.Context) error {
 		return errors.WithStack(errors.New("no transaction found"))
 	}
 
-	req := &models.FriendRequest{}
-	if err := c.Bind(req); err != nil {
-		return c.Error(400, err)
-	}
-
 	auth := getCredentials(c)
 	user := &models.User{}
 	if err := tx.Find(user, c.Param("user_id")); err != nil {
 		return c.Error(404, errors.New("Not Found"))
+	}
+
+	req := &models.FriendRequest{}
+	if err := c.Bind(req); err != nil {
+		return c.Error(400, err)
 	}
 
 	req.FromID = auth.ID
@@ -39,6 +39,33 @@ func FriendRequestsCreate(c buffalo.Context) error {
 	return c.Render(200, r.JSON(req))
 }
 
+// FriendshipDestroy Unfriends a friend
+func FriendshipsDestroy(c buffalo.Context) error {
+	tx, ok := c.Value("tx").(*pop.Connection)
+	if !ok {
+		return errors.WithStack(errors.New("no transaction found"))
+	}
+
+	auth := getCredentials(c)
+	user := &models.User{}
+	if err := tx.Find(user, c.Param("user_id")); err != nil {
+		return c.Error(404, errors.New("Not Found"))
+	}
+	if auth.ID == user.ID {
+		return c.Error(400, errors.New("Can't unfriend yourself"))
+	}
+
+	fs := &models.Friendship{
+		UserID:   auth.ID,
+		FriendID: user.ID,
+	}
+	if err := fs.Destroy(tx); err != nil {
+		return errors.WithStack(err)
+	}
+
+	return c.Render(200, r.JSON("OK"))
+}
+
 // FriendRequestsAccept accepts a friend request.
 func FriendRequestsAccept(c buffalo.Context) error {
 	tx, ok := c.Value("tx").(*pop.Connection)
@@ -49,6 +76,7 @@ func FriendRequestsAccept(c buffalo.Context) error {
 	if err := tx.Find(req, c.Param("request_id")); err != nil {
 		return c.Error(404, err)
 	}
+
 	auth := getCredentials(c)
 	if req.ToID != auth.ID {
 		return c.Error(403, errors.New("This request isn't yours to accept."))

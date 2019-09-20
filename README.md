@@ -79,10 +79,10 @@ $ BOB_ID=d9e24321-cd55-4349-85f8-047bec35175c
 ## Authentication
 
 Authentication is basically out of the scope for this API, but there is a need
-for some basic role-management in the rest of it, so I wrote a simple
+for some role management in the rest of it, so I wrote a simple
 "fake" auth system based on JWT tokens.
 
-Basically, if you place a GET request on the `/fake_auth/{login}` endpoint, you get a
+If you place a GET request on the `/fake_auth/{login}` endpoint, you get a
 token that you can pass as a `Authentication: Bearer <TOKEN>` header.
 
 Let's define a couple env vars for the rest of this demo:
@@ -159,6 +159,9 @@ curl -X PUT -H $AS_BOB -d '{"admin": true}' "http://$URL/users/$BOB_ID"
 
 ## Friends and friend requests
 
+We'll simply quickly cover the nominal case here. A deeper and more thorough functional
+test was written in `actions/friendships_test.go`.
+
 Let's suppose Bob wants to become friends with Alice. He can place a friend request
 by sending a POST to `/users/{user_id}/friend_request`.
 
@@ -193,7 +196,6 @@ $ curl -H $AS_BOB http://$URL/users/$BOB_ID |python3 -m json.tool
                 "admin": false
             },
             "message": "Please be my friend.",
-            "status": "PENDING"
         }
     ]
 }
@@ -219,7 +221,6 @@ $ curl -H $AS_ALICE http://$URL/users/$ALICE_ID  |python3 -m json.tool
                 "admin": false
             },
             "message": "Please be my friend.",
-            "status": "PENDING"
         }
     ]
 }
@@ -242,6 +243,9 @@ $ curl -H $AS_BOB http://$URL/users/$ALICE_ID |python3 -m json.tool
 
 Also, not shown here:
 
+* Alice can't make a friend-request to Bob while there's
+already one the other way round: this avoids breaking the consistency in
+the database. A Tinder-like matchmaking system would be overkill here.
 * Bob can't request himself as a friend,
 * Bob can't make friend requests to his friends,
 * Bob can have only one pending friend request to Alice:
@@ -277,15 +281,21 @@ $ curl -H $AS_ALICE http://$URL/users/$ALICE_ID | python3 -m json.tool
 }
 ```
 
+Once a friend request is accepted (resp. declined) it can't be "declined (resp. accepted) back".
+
 **Note:** This bidirectional, many-to-many relationship, is modelled as two distinct
 lines within the same table (one for Bob to Alice, and one for Alice to Bob).
 This design choice is debatable (friendships take more space in the database),
 however it results in simpler code. [More info
 here](https://stackoverflow.com/questions/10807900/how-to-store-bidirectional-relationships-in-a-rdbms-like-mysql).
 
-**TODO:**
+Friendships are also private:
 
-* add "unfriend" feature.
-* write auto tests for this use-case.
+* Bob can't see Alice's friends, even if he's part of them.
+* Admins can see Alice and Bob's friends.
+
+Finally, Alice can unfriend Bob with `GET /users/{user_id}/unfriend`:
+
+## Reporting users
 
 **To Be Continued...**

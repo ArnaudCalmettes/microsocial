@@ -29,7 +29,14 @@ func UsersList(c buffalo.Context) error {
 	return c.Render(200, r.JSON(users))
 }
 
-// UsersShow shows all available information about a user
+// UsersShow shows all available information about a user.
+//
+// XXX: This call may get costly with time (in the worst case scenario,
+// it already performs 5 DB queries). However, this is a first iteration:
+// let's see how it behaves in prod before optimizing anything.
+//
+// An obvious improvement may be to use a "If-Modified-Since" caching
+// strategy.
 func UsersShow(c buffalo.Context) error {
 	tx, ok := c.Value("tx").(*pop.Connection)
 	if !ok {

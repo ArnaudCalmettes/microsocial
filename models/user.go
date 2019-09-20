@@ -125,13 +125,13 @@ func (u *User) FetchFriends(tx *pop.Connection) error {
 
 // FetchOutRequests looks up a user's outgoing friend requests
 func (u *User) FetchOutRequests(tx *pop.Connection) error {
-	q := tx.Eager("To").Where("from_id = ? AND status = ?", u.ID, "PENDING")
+	q := tx.Eager("To").Where("from_id = ?", u.ID)
 	return q.All(&u.OutRequests)
 }
 
 // FetchInRequests looks up a user's incoming friend requests
 func (u *User) FetchInRequests(tx *pop.Connection) error {
-	q := tx.Eager("From").Where("to_id = ? AND status = ?", u.ID, "PENDING")
+	q := tx.Eager("From").Where("to_id = ?", u.ID)
 	return q.All(&u.InRequests)
 }
 

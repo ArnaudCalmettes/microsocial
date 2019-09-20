@@ -18,7 +18,6 @@ func (ms *ModelSuite) Test_FriendRequest_Create() {
 	ms.NoError(err)
 	ms.Falsef(verrs.HasAny(), verrs.String())
 	ms.NotZero(request.ID)
-	ms.Equal("PENDING", request.Status)
 
 	count, err = ms.DB.Count("friend_requests")
 	ms.NoError(err)
@@ -52,7 +51,6 @@ func (ms *ModelSuite) Test_FriendRequest_Accept() {
 
 	err = request.Accept(ms.DB)
 	ms.NoError(err)
-	ms.Equal("ACCEPTED", request.Status)
 
 	count, err := ms.DB.Count("friendships")
 	ms.NoError(err)
@@ -78,7 +76,6 @@ func (ms *ModelSuite) Test_FriendRequest_Decline() {
 
 	err = request.Decline(ms.DB)
 	ms.NoError(err)
-	ms.Equal("DECLINED", request.Status)
 
 	count, err := ms.DB.Count("friendships")
 	ms.NoError(err)
