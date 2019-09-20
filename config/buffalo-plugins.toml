@@ -13,3 +13,7 @@
 [[plugin]]
   binary = "nulls"
   go_get = "github.com/gobuffalo/nulls"
+
+[[plugin]]
+  binary = "v2"
+  go_get = "github.com/gobuffalo/packr/v2"

@@ -2,7 +2,22 @@
 
 This is a toy social network-like REST API written in Golang, using Buffalo.
 
-It is currently a Work In Progress.
+# Build & run
+
+`docker-compose up` should do the trick. :)
+
+However if you want to use the docker image, you should pass the following environment variables to
+the container:
+
+* `JWT_SECRET`: secret used to sign JSON Web Tokens.
+* `DATABASE_URL`: full URL to PostgreSQL database.
+
+For example, here are the default values I'm using in my `.env` file:
+
+```
+JWT_SECRET=microsocial_secret
+DATABASE_URL=postgres://buffalo:buffalo@db:5432/microsocial?sslmode=disable
+```
 
 # Step-by-step demo
 
@@ -11,9 +26,7 @@ to develop the API.
 
 ## Setting up the stage
 
-The app is currently usable in "development mode" (the Docker release will come soon).
-To set it up, update "database.yml" to point to a valid PostgreSQL database with the right
-credentials.
+The app listens on TCP port 3000.
 
 Let's start by defining a bunch of users, using POST requests on the `/users` endpoint:
 
@@ -133,7 +146,7 @@ $ curl -X PUT -H $AS_ALICE -d '{"info": "Not a sponge"}' "http://$URL/users/$BOB
 Of course, Alice can't modify Bob's information. Let's retry as Bob:
 
 ```bash
-curl -X PUT -H $AS_BOB -d '{"info": "Not a sponge"}' "http://$URL/users/$BOB_ID"
+$ curl -X PUT -H $AS_BOB -d '{"info": "Not a sponge"}' "http://$URL/users/$BOB_ID" | python3 -m json.tool
 {
     "id": "d9e24321-cd55-4349-85f8-047bec35175c",
     "created_at": "2019-09-19T18:44:13.407875Z",
@@ -294,8 +307,13 @@ Friendships are also private:
 * Bob can't see Alice's friends, even if he's part of them.
 * Admins can see Alice and Bob's friends.
 
-Finally, Alice can unfriend Bob with `GET /users/{user_id}/unfriend`:
+Finally, Alice can unfriend Bob with `GET /users/{user_id}/unfriend`.
 
-## Reporting users
+```bash
+$ curl -H $AS_ALICE http://$URL/users/$BOB_ID/unfriend
+"OK"
+```
+
+## Reporting users (basic moderation)
 
 **To Be Continued...**

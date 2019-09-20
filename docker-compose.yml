@@ -1,0 +1,19 @@
+version: "3.7"
+services:
+    web:
+        build:
+            context: .
+        env_file:
+        - .env
+        depends_on:
+        - db
+        ports:
+        - "3000:3000"
+    db:
+        image: postgres:11
+        environment:
+        - POSTGRES_USER=buffalo
+        - POSTGRES_PASSWORD=buffalo
+        - POSTGRES_DB=microsocial
+        ports:
+        - "5432:5432"
