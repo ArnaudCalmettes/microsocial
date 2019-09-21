@@ -8,6 +8,13 @@ import (
 )
 
 // UsersList lists all existing users
+// @Summary List all users
+// @Description List all existing users
+// @Produce  json
+// @Success 200 {object} models.Users
+// @Header 200  {object} X-Pagination "pagination information"
+// @Failure 500 {object} FormattedError
+// @Router /users/ [get]
 func UsersList(c buffalo.Context) error {
 	tx, ok := c.Value("tx").(*pop.Connection)
 	if !ok {
@@ -31,12 +38,22 @@ func UsersList(c buffalo.Context) error {
 
 // UsersShow shows all available information about a user.
 //
-// XXX: This call may get costly with time (in the worst case scenario,
+// This call may get costly with time (in the worst case scenario,
 // it already performs 5 DB queries). However, this is a first iteration:
 // let's see how it behaves in prod before optimizing anything.
 //
 // An obvious improvement may be to use a "If-Modified-Since" caching
 // strategy.
+// @Summary Show a user's profile
+// @Description Show a detailed user profile.
+// @Produce  json
+// @security Bearer
+// @Param user_id path string true "ID of the user"
+// @Success 200 {object} models.User
+// @Failure 401 {object} FormattedError
+// @Failure 404 {object} FormattedError
+// @Failure 500 {object} FormattedError
+// @Router /users/{user_id} [get]
 func UsersShow(c buffalo.Context) error {
 	tx, ok := c.Value("tx").(*pop.Connection)
 	if !ok {
@@ -71,7 +88,23 @@ func UsersShow(c buffalo.Context) error {
 
 }
 
+// Model accepted for user creation and modification
+type LightUser struct {
+	Login string `json:"login"` // User login (must be unique)
+	Info  string `json:"info"`  // Optional user info
+	Admin string `json:"admin"` // User has admin powers
+}
+
 // UsersCreate creates a new user
+// @Summary Create a new user
+// @Description Creates a new user
+// @Accept  json
+// @Produce  json
+// @Param userinfo body actions.LightUser true "login (mandatory), info, admin"
+// @Success 201 {object} models.User
+// @Failure 400 {object} FormattedError
+// @Failure 409 {object} FormattedError "The login is already taken"
+// @Router /users/ [post]
 func UsersCreate(c buffalo.Context) error {
 	tx, ok := c.Value("tx").(*pop.Connection)
 	if !ok {
@@ -95,6 +128,19 @@ func UsersCreate(c buffalo.Context) error {
 }
 
 // UsersUpdate updates user information
+// @Summary Update a user's information
+// @Description Update a user's information
+// @security Bearer
+// @Accept  json
+// @Produce  json
+// @Param user_id path string true "The user ID"
+// @Param userinfo body actions.LightUser true "New user information"
+// @Success 200 {object} models.User
+// @Failure 400 {object} FormattedError
+// @Failure 401 {object} FormattedError
+// @Failure 403 {object} FormattedError
+// @Failure 409 {object} FormattedError
+// @Router /users/{user_id} [put]
 func UsersUpdate(c buffalo.Context) error {
 	tx, ok := c.Value("tx").(*pop.Connection)
 	if !ok {
@@ -132,6 +178,15 @@ func UsersUpdate(c buffalo.Context) error {
 }
 
 // UsersDestroy deletes a user from the DB
+// @Summary Deletes a user.
+// @Description Deletes a user
+// @security Bearer
+// @Produce  json
+// @Success 200 {object} models.User
+// @Failure 401 {object} FormattedError
+// @Failure 403 {object} FormattedError
+// @Failure 404 {object} FormattedError
+// @Router /users/{user_id} [delete]
 func UsersDestroy(c buffalo.Context) error {
 	tx, ok := c.Value("tx").(*pop.Connection)
 	if !ok {

@@ -33,6 +33,16 @@ func getCredentials(c buffalo.Context) *models.User {
 	}
 }
 
+// @Summary Get Bearer token for given user
+// @Description Get Bearer token for given user
+// @Produce  json
+// @Param user_login path string true "Login of the user"
+// @Param exp query string false "Token duration (default: '24h')"
+// @Success 200 {object} string
+// @Failure 400 {object} FormattedError
+// @Failure 404 {object} FormattedError
+// @Failure 500 {object} FormattedError
+// @Router /fake_auth/{user_login} [get]
 func LoginAsUser(c buffalo.Context) error {
 	tx, ok := c.Value("tx").(*pop.Connection)
 	if !ok {

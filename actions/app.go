@@ -9,8 +9,11 @@ import (
 	forcessl "github.com/gobuffalo/mw-forcessl"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 	tokenauth "github.com/gobuffalo/mw-tokenauth"
+	buffaloSwagger "github.com/swaggo/buffalo-swagger"
+	"github.com/swaggo/buffalo-swagger/swaggerFiles"
 	"github.com/unrolled/secure"
 
+	_ "github.com/ArnaudCalmettes/microsocial/docs"
 	"github.com/ArnaudCalmettes/microsocial/models"
 	"github.com/gobuffalo/buffalo-pop/pop/popmw"
 	contenttype "github.com/gobuffalo/mw-contenttype"
@@ -18,10 +21,24 @@ import (
 	"github.com/rs/cors"
 )
 
+// @title Microsocial API
+// @version 1.0
+// @description Toy social-network REST API
+// @host localhost:3000
+// @BasePath /
+
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
 // ENV is used to help switch settings based on where the
 // application is being run. Default is "development".
 var ENV = envy.Get("GO_ENV", "development")
 var app *buffalo.App
+
+type FormattedError struct {
+	Error  string `json:"error"`
+	Status int    `json:"status"`
+}
 
 func errorHandler() buffalo.ErrorHandler {
 	return func(status int, err error, c buffalo.Context) error {
@@ -81,6 +98,8 @@ func App() *buffalo.App {
 		reports := app.Group("/reports")
 		reports.Use(auth_mw)
 		reports.GET("/", ReportsList)
+
+		app.GET("/swagger/{doc:.*}", buffaloSwagger.WrapHandler(swaggerFiles.Handler))
 
 		app.ErrorHandlers[400] = errorHandler()
 		app.ErrorHandlers[401] = errorHandler()

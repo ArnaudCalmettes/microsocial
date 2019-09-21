@@ -1,0 +1,519 @@
+basePath: /
+definitions:
+  actions.FormattedError:
+    properties:
+      error:
+        type: string
+      status:
+        type: integer
+    type: object
+  actions.LightFriendRequest:
+    properties:
+      message:
+        type: string
+    type: object
+  actions.LightReport:
+    properties:
+      info:
+        type: string
+    type: object
+  actions.LightUser:
+    properties:
+      admin:
+        description: User has admin powers
+        type: string
+      info:
+        description: Optional user info
+        type: string
+      login:
+        description: User login (must be unique)
+        type: string
+    type: object
+  models.FriendRequest:
+    properties:
+      created_at:
+        type: string
+      from:
+        $ref: '#/definitions/models.User'
+        type: object
+      id:
+        type: string
+      message:
+        type: string
+      to:
+        $ref: '#/definitions/models.User'
+        type: object
+      updated_at:
+        type: string
+    type: object
+  models.FriendRequests:
+    items: {}
+    type: array
+  models.Report:
+    properties:
+      about:
+        $ref: '#/definitions/models.User'
+        type: object
+      by:
+        $ref: '#/definitions/models.User'
+        type: object
+      created_at:
+        type: string
+      id:
+        type: string
+      info:
+        type: string
+    type: object
+  models.Reports:
+    items:
+      properties:
+        about:
+          $ref: '#/definitions/models.User'
+          type: object
+        by:
+          $ref: '#/definitions/models.User'
+          type: object
+        created_at:
+          type: string
+        id:
+          type: string
+        info:
+          type: string
+      type: object
+    type: array
+  models.User:
+    properties:
+      admin:
+        type: boolean
+      created_at:
+        type: string
+      friends:
+        $ref: '#/definitions/models.Users'
+        type: object
+      id:
+        type: string
+      incoming_requests:
+        $ref: '#/definitions/models.FriendRequests'
+        type: object
+      info:
+        type: string
+      login:
+        type: string
+      pending_requests:
+        $ref: '#/definitions/models.FriendRequests'
+        type: object
+      reports:
+        $ref: '#/definitions/models.Reports'
+        type: object
+      updated_at:
+        type: string
+    type: object
+  models.Users:
+    items: {}
+    type: array
+host: localhost:3000
+info:
+  contact: {}
+  description: toy social-network REST API
+  license: {}
+  title: Microsocial API
+  version: "1.0"
+paths:
+  /fake_auth/{user_login}:
+    get:
+      description: Get Bearer token for given user
+      parameters:
+      - description: Login of the user
+        in: path
+        name: user_login
+        required: true
+        type: string
+      - description: 'Token duration (default: ''24h'')'
+        in: query
+        name: exp
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/string'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+      summary: Get Bearer token for given user
+  /friend_requests/{request_id}/accept:
+    get:
+      description: Accept a friend request
+      parameters:
+      - description: The friend request ID
+        in: path
+        name: request_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.FriendRequest'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "403":
+          description: This request isn't yours to accept
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+      security:
+      - Bearer: []
+      summary: Accept a friend request
+  /friend_requests/{request_id}/decline:
+    get:
+      description: Decline a friend request
+      parameters:
+      - description: The friend request ID
+        in: path
+        name: request_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.FriendRequest'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "403":
+          description: This request isn't yours to decline
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+      security:
+      - Bearer: []
+      summary: Decline a friend request
+  /reports/:
+    get:
+      description: List available reports (requires admin credentials)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Reports'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+      security:
+      - Bearer: []
+      summary: List available reports (requires admin credentials)
+  /users/:
+    get:
+      description: List all existing users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Pagination:
+              description: pagination information
+              type: object
+          schema:
+            $ref: '#/definitions/models.Users'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+      summary: List all users
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user
+      parameters:
+      - description: login (mandatory), info, admin
+        in: body
+        name: userinfo
+        required: true
+        schema:
+          $ref: '#/definitions/actions.LightUser'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "409":
+          description: The login is already taken
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+      summary: Create a new user
+  /users/{user_id}:
+    delete:
+      description: Deletes a user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+      security:
+      - Bearer: []
+      summary: Deletes a user.
+    get:
+      description: Show a detailed user profile.
+      parameters:
+      - description: ID of the user
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+      security:
+      - Bearer: []
+      summary: Show a user's profile
+    put:
+      consumes:
+      - application/json
+      description: Update a user's information
+      parameters:
+      - description: The user ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: New user information
+        in: body
+        name: userinfo
+        required: true
+        schema:
+          $ref: '#/definitions/actions.LightUser'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+      security:
+      - Bearer: []
+      summary: Update a user's information
+  /users/{user_id}/friend_request:
+    post:
+      consumes:
+      - application/json
+      description: Send a friend request to a user
+      parameters:
+      - description: The user's ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: message associated to the friend request
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/actions.LightFriendRequest'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.FriendRequest'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "409":
+          description: You can't request yourself as a friend
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+      security:
+      - Bearer: []
+      summary: Send a friend request to a user
+  /users/{user_id}/report:
+    post:
+      consumes:
+      - application/json
+      description: Report a user to the moderators
+      parameters:
+      - description: The user's ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Mandatory report information
+        in: body
+        name: userinfo
+        required: true
+        schema:
+          $ref: '#/definitions/actions.LightReport'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Report'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "409":
+          description: You can't report yourself
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+      security:
+      - Bearer: []
+      summary: Report a user to the moderators
+  /users/{user_id}/unfriend:
+    get:
+      description: Unfriend another user
+      parameters:
+      - description: The user's ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/string'
+        "400":
+          description: Can't unfriend yourself
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/actions.FormattedError'
+      security:
+      - Bearer: []
+      summary: Unfriend another user
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

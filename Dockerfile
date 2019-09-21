@@ -2,12 +2,12 @@
 # https://docs.docker.com/engine/userguide/eng-image/multistage-build/
 FROM gobuffalo/buffalo:v0.14.10 as builder
 
-RUN mkdir -p $GOPATH/src/github.com/ArnaudCalmettes
-WORKDIR $GOPATH/src/github.com/ArnaudCalmettes
+RUN mkdir -p $GOPATH/src/github.com/ArnaudCalmettes/microsocial
+WORKDIR $GOPATH/src/github.com/ArnaudCalmettes/microsocial
 RUN go get github.com/gobuffalo/packr/v2
 
 ADD . .
-RUN go get ./...
+RUN go get -v ./...
 RUN buffalo build --static -o /bin/app
 
 FROM alpine

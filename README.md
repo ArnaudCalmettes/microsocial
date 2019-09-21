@@ -6,7 +6,7 @@ This is a toy social network-like REST API written in Golang, using Buffalo.
 
 `docker-compose up` should do the trick. :)
 
-However if you want to use the docker image, you should pass the following environment variables to
+However if you want to use the docker image independently, you should pass the following environment variables to
 the container:
 
 * `JWT_SECRET`: secret used to sign JSON Web Tokens.
@@ -19,10 +19,15 @@ JWT_SECRET=microsocial_secret
 DATABASE_URL=postgres://buffalo:buffalo@db:5432/microsocial?sslmode=disable
 ```
 
+# Swagger documentation
+
+When the app is launched, point your browser to `http://localhost:3000/swagger/index.html`
+to display the API documentation.
+
 # Step-by-step demo
 
-The modelization is completely finished. I'm using this step-by-step demo as a guide
-to develop the API.
+If you prefer being told a functional narrative over reading a frozen cold
+API documentation (I know I do...), you may find the following demo helpful. :)
 
 ## Setting up the stage
 
@@ -91,9 +96,9 @@ $ BOB_ID=d9e24321-cd55-4349-85f8-047bec35175c
 
 ## Authentication
 
-Authentication is basically out of the scope for this API, but there is a need
-for some role management in the rest of it, so I wrote a simple
-"fake" auth system based on JWT tokens.
+Authentication is basically out of the scope for this API, but there is a
+need for some role management in the rest of it, so I wrote a simple "fake"
+auth system based on JWT tokens.
 
 If you place a GET request on the `/fake_auth/{login}` endpoint, you get a
 token that you can pass as a `Authentication: Bearer <TOKEN>` header.
@@ -109,11 +114,15 @@ $ AS_ALICE="Authorization: Bearer $ALICE_TOKEN"
 $ AS_BOB="Authorization: Bearer $BOB_TOKEN"
 ```
 
-Now, we can use `curl -H $AS_ALICE ...` to interact with the API on behalf of Alice, and so
-on.
+Now, we can use `curl -H $AS_ALICE ...` to interact with the API on behalf
+of Alice, and so on.
 
-Note: the default duration of the tokens is 24 hours. You can change this by using an `exp` GET
-parameter when generating it. For instance:
+**If you're using swagger**, you can do the same by clicking the green *Authorize*
+button and entering `Bearer <token value>` in the Value field. This will allow
+you to run examples directly in the documentation interface.
+
+Note: the default duration of the tokens is 24 hours. You can change this by
+using an `exp` GET parameter when generating it. For instance:
 
 * `?exp=10s` will generate a token that will expire in 10 seconds,
 * `?exp=15m` for 15 minutes,
@@ -399,3 +408,6 @@ $ curl -H $AS_BOB http://localhost:3000/users/$BOB_ID |python3 -m json.tool
 }
 ```
 
+# Discussing design choices
+
+**[TBD]**

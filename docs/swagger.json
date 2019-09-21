@@ -1,0 +1,795 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "toy social-network REST API",
+        "title": "Microsocial API",
+        "contact": {},
+        "license": {},
+        "version": "1.0"
+    },
+    "host": "localhost:3000",
+    "basePath": "/",
+    "paths": {
+        "/fake_auth/{user_login}": {
+            "get": {
+                "description": "Get Bearer token for given user",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get Bearer token for given user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Login of the user",
+                        "name": "user_login",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Token duration (default: '24h')",
+                        "name": "exp",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend_requests/{request_id}/accept": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Accept a friend request",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Accept a friend request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The friend request ID",
+                        "name": "request_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.FriendRequest"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "403": {
+                        "description": "This request isn't yours to accept",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    }
+                }
+            }
+        },
+        "/friend_requests/{request_id}/decline": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Decline a friend request",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Decline a friend request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The friend request ID",
+                        "name": "request_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.FriendRequest"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "403": {
+                        "description": "This request isn't yours to decline",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "List available reports (requires admin credentials)",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "List available reports (requires admin credentials)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Reports"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/": {
+            "get": {
+                "description": "List all existing users",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "List all users",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Users"
+                        },
+                        "headers": {
+                            "X-Pagination": {
+                                "type": "object",
+                                "description": "pagination information"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create a new user",
+                "parameters": [
+                    {
+                        "description": "login (mandatory), info, admin",
+                        "name": "userinfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/actions.LightUser"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "409": {
+                        "description": "The login is already taken",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Show a detailed user profile.",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Show a user's profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the user",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Update a user's information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Update a user's information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The user ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New user information",
+                        "name": "userinfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/actions.LightUser"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Deletes a user",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Deletes a user.",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/friend_request": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Send a friend request to a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Send a friend request to a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The user's ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "message associated to the friend request",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/actions.LightFriendRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.FriendRequest"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "409": {
+                        "description": "You can't request yourself as a friend",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/report": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Report a user to the moderators",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Report a user to the moderators",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The user's ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Mandatory report information",
+                        "name": "userinfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/actions.LightReport"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Report"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "409": {
+                        "description": "You can't report yourself",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/unfriend": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Unfriend another user",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Unfriend another user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The user's ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/string"
+                        }
+                    },
+                    "400": {
+                        "description": "Can't unfriend yourself",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/actions.FormattedError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "actions.FormattedError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "actions.LightFriendRequest": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "actions.LightReport": {
+            "type": "object",
+            "properties": {
+                "info": {
+                    "type": "string"
+                }
+            }
+        },
+        "actions.LightUser": {
+            "type": "object",
+            "properties": {
+                "admin": {
+                    "description": "User has admin powers",
+                    "type": "string"
+                },
+                "info": {
+                    "description": "Optional user info",
+                    "type": "string"
+                },
+                "login": {
+                    "description": "User login (must be unique)",
+                    "type": "string"
+                }
+            }
+        },
+        "models.FriendRequest": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "from": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.User"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.User"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.FriendRequests": {
+            "type": "array",
+            "items": {}
+        },
+        "models.Report": {
+            "type": "object",
+            "properties": {
+                "about": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.User"
+                },
+                "by": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.User"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "info": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Reports": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "about": {
+                        "type": "object",
+                        "$ref": "#/definitions/models.User"
+                    },
+                    "by": {
+                        "type": "object",
+                        "$ref": "#/definitions/models.User"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "info": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "models.User": {
+            "type": "object",
+            "properties": {
+                "admin": {
+                    "type": "boolean"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "friends": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.Users"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "incoming_requests": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.FriendRequests"
+                },
+                "info": {
+                    "type": "string"
+                },
+                "login": {
+                    "type": "string"
+                },
+                "pending_requests": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.FriendRequests"
+                },
+                "reports": {
+                    "type": "object",
+                    "$ref": "#/definitions/models.Reports"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Users": {
+            "type": "array",
+            "items": {}
+        }
+    },
+    "securityDefinitions": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}
