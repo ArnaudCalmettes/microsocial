@@ -14,10 +14,7 @@ type ActionSuite struct {
 
 func Test_ActionSuite(t *testing.T) {
 	gofakeit.Seed(time.Now().UnixNano())
-	action, err := suite.NewAction(App())
-	if err != nil {
-		t.Fatal(err)
-	}
+	action := suite.NewAction(App())
 
 	as := &ActionSuite{
 		Action: action,

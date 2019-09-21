@@ -14,9 +14,9 @@ import (
 type Report struct {
 	ID        uuid.UUID `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	ByID      uuid.UUID `json:"by_id" db:"by_id"`
+	ByID      uuid.UUID `json:"-" db:"by_id"`
 	By        *User     `json:"by,omitempty" db:"-" belongs_to:"user"`
-	AboutID   uuid.UUID `json:"about_id" db:"about_id"`
+	AboutID   uuid.UUID `json:"-" db:"about_id"`
 	About     *User     `json:"about,omitempty" db:"-" belongs_to:"user"`
 	Info      string    `json:"info" db:"info"`
 }

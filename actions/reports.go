@@ -19,8 +19,19 @@ func ReportsCreate(c buffalo.Context) error {
 		return c.Error(400, err)
 	}
 
+	user := &models.User{}
+	if err := tx.Find(user, c.Param("user_id")); err != nil {
+		return c.Error(404, errors.New("This user doesn't exist"))
+	}
+
 	auth := getCredentials(c)
+
+	if user.ID == auth.ID {
+		return c.Error(409, errors.New("Can't report yourself"))
+	}
+
 	report.ByID = auth.ID
+	report.AboutID = user.ID
 
 	verrs, err := report.Create(tx)
 	if err != nil {
@@ -47,7 +58,7 @@ func ReportsList(c buffalo.Context) error {
 
 	reports := &models.Reports{}
 	q := tx.PaginateFromParams(c.Params())
-	if err := q.All(reports); err != nil {
+	if err := q.Eager().All(reports); err != nil {
 		return errors.WithStack(err)
 	}
 

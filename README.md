@@ -314,6 +314,88 @@ $ curl -H $AS_ALICE http://$URL/users/$BOB_ID/unfriend
 "OK"
 ```
 
-## Reporting users (basic moderation)
+## Reporting users
 
-**To Be Continued...**
+Alice can report Bob to moderators, using the `/users/{user_id}/report` action. Note that in this
+case she needs to provide information.
+
+```bash
+$ curl -H $AS_ALICE -d '{"info": "This user is a jerk"}' http://localhost:3000/users/$BOB_ID/report
+```
+
+Reports can the be listed by a `GET` call on the `/reports` endpoints, but they're obviously only
+acressible by "admins" :
+
+```bash
+$ curl -H $AS_BOB http://localhost:3000/reports/
+{"error":"Forbidden","status":403}
+$ curl -H $AS_ADMIN http://localhost:3000/reports/ |python3 -m json.tool
+[
+    {
+        "id": "25420fc8-5b42-4807-bac3-0313987add88",
+        "created_at": "2019-09-21T18:05:14.049986Z",
+        "by": {
+            "id": "2acc6f8a-42ec-4f4b-bfe8-149ed0a83372",
+            "created_at": "2019-09-19T18:43:52.715929Z",
+            "updated_at": "2019-09-19T18:43:52.715934Z",
+            "login": "Alice",
+            "info": "Live from Wonderland",
+            "admin": false
+        },
+        "about": {
+            "id": "d9e24321-cd55-4349-85f8-047bec35175c",
+            "created_at": "2019-09-19T18:44:13.407875Z",
+            "updated_at": "2019-09-19T20:32:36.739483Z",
+            "login": "Bob",
+            "info": "Not a sponge",
+            "admin": false
+        },
+        "info": "This user is a jerk"
+    }
+]
+```
+
+Alternatively, admins can also see reports made about a user when they're visiting this user's
+profile:
+
+```bash
+$ curl -H $AS_ADMIN http://localhost:3000/users/$BOB_ID |python3 -m json.tool
+{
+    "id": "d9e24321-cd55-4349-85f8-047bec35175c",
+    "created_at": "2019-09-19T18:44:13.407875Z",
+    "updated_at": "2019-09-19T20:32:36.739483Z",
+    "login": "Bob",
+    "info": "Not a sponge",
+    "admin": false,
+    "reports": [
+        {
+            "id": "25420fc8-5b42-4807-bac3-0313987add88",
+            "created_at": "2019-09-21T18:05:14.049986Z",
+            "by": {
+                "id": "2acc6f8a-42ec-4f4b-bfe8-149ed0a83372",
+                "created_at": "2019-09-19T18:43:52.715929Z",
+                "updated_at": "2019-09-19T18:43:52.715934Z",
+                "login": "Alice",
+                "info": "Live from Wonderland",
+                "admin": false
+            },
+            "info": "This user is a jerk"
+        }
+    ]
+}
+```
+
+Although this information stays invisible to "normal" users:
+
+```bash
+$ curl -H $AS_BOB http://localhost:3000/users/$BOB_ID |python3 -m json.tool
+{
+    "id": "d9e24321-cd55-4349-85f8-047bec35175c",
+    "created_at": "2019-09-19T18:44:13.407875Z",
+    "updated_at": "2019-09-19T20:32:36.739483Z",
+    "login": "Bob",
+    "info": "Not a sponge",
+    "admin": false
+}
+```
+

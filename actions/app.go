@@ -70,6 +70,7 @@ func App() *buffalo.App {
 		users.DELETE("/{user_id}", UsersDestroy)
 		users.POST("/{user_id}/friend_request", FriendRequestsCreate)
 		users.GET("/{user_id}/unfriend", FriendshipsDestroy)
+		users.POST("/{user_id}/report", ReportsCreate)
 		users.Middleware.Skip(auth_mw, UsersList, UsersCreate)
 
 		frs := app.Group("/friend_requests")
@@ -79,7 +80,6 @@ func App() *buffalo.App {
 
 		reports := app.Group("/reports")
 		reports.Use(auth_mw)
-		reports.POST("/", ReportsCreate)
 		reports.GET("/", ReportsList)
 
 		app.ErrorHandlers[400] = errorHandler()

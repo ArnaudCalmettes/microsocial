@@ -2,40 +2,32 @@ package actions
 
 import (
 	"encoding/json"
-	"time"
+	"fmt"
 
 	"github.com/ArnaudCalmettes/microsocial/models"
 )
 
 func (as *ActionSuite) Test_Reports_Create() {
-	user := as.createRandomUser()
-	subject := as.createRandomUser()
-	url := "/reports"
-	payload := map[string]string{
-		"about_id": subject.ID.String(),
-		"info":     "This user is a jerk!",
-	}
+	user, user_token := as.createUserAndToken(false)
+	subject, subject_token := as.createUserAndToken(false)
+	payload := map[string]string{"info": "This user is a jerk!"}
+
+	url := fmt.Sprintf("/users/%s/report", subject.ID)
 
 	// Unauthorized
 	resp := as.JSON(url).Post(payload)
 	as.Equal(401, resp.Code)
 
-	user_token, err := newToken(user, time.Minute)
-	as.NoError(err)
-
-	subject_token, err := newToken(subject, time.Minute)
-	as.NoError(err)
-
 	// "Subject" tries to file a report on himself
 	resp = as.createAuthRequest(url, subject_token).Post(payload)
-	as.Equal(400, resp.Code)
+	as.Equal(409, resp.Code)
 
 	// User files a report on Subject
 	resp = as.createAuthRequest(url, user_token).Post(payload)
 	as.Equalf(201, resp.Code, resp.Body.String())
 
 	report := &models.Report{}
-	err = json.Unmarshal(resp.Body.Bytes(), report)
+	err := json.Unmarshal(resp.Body.Bytes(), report)
 	as.NoError(err)
 	as.False(report.CreatedAt.IsZero())
 	as.Equal(user.ID, report.ByID)
@@ -48,11 +40,9 @@ func (as *ActionSuite) Test_Reports_Create() {
 }
 
 func (as *ActionSuite) Test_Reports_List() {
-	user := as.createRandomUser()
+	_, admin_token := as.createUserAndToken(true)
+	user, user_token := as.createUserAndToken(false)
 	other := as.createRandomUser()
-	admin := as.createRandomUser()
-	admin.Admin = true
-	admin.Update(as.DB)
 
 	infos := []string{
 		"This user is a jerk",
@@ -85,13 +75,11 @@ func (as *ActionSuite) Test_Reports_List() {
 	as.Equal(401, resp.Code)
 
 	// Non-admin
-	token, err := newToken(user, time.Minute)
-	resp = as.createAuthRequest(url, token).Get()
+	resp = as.createAuthRequest(url, user_token).Get()
 	as.Equal(403, resp.Code)
 
 	// Anybody with admin credentials
-	token, err = newToken(admin, time.Minute)
-	resp = as.createAuthRequest(url, token).Get()
+	resp = as.createAuthRequest(url, admin_token).Get()
 	as.Equal(200, resp.Code)
 
 	reports := models.Reports{}

@@ -3,36 +3,10 @@ package actions
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/ArnaudCalmettes/microsocial/models"
 	"github.com/gofrs/uuid"
 )
-
-// createUserAndToken creates a random user and generates the related auth
-// token.
-func (as *ActionSuite) createUserAndToken(is_admin bool) (*models.User, string) {
-	user := as.createRandomUser()
-	if is_admin {
-		user.Admin = is_admin
-		user.Update(as.DB)
-	}
-	token, err := newToken(user, time.Minute)
-	as.NoError(err)
-	return user, token
-}
-
-// loadProfileAs Queries user profile using given auth token
-func (as *ActionSuite) loadProfileAs(user *models.User, token string) *models.User {
-	resp := as.createAuthRequest(fmt.Sprintf("/users/%s", user.ID), token).Get()
-	as.Equal(200, resp.Code)
-
-	profile := &models.User{}
-	err := json.Unmarshal(resp.Body.Bytes(), profile)
-	as.NoError(err)
-
-	return profile
-}
 
 // Full functional test scenario for friend requests & friendship
 // Aka. The Short and Awkward Tale of Alice and Bob
