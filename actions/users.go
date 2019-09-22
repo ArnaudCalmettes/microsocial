@@ -11,6 +11,8 @@ import (
 // @Summary List all users
 // @Description List all existing users
 // @Produce  json
+// @Param page query int false "Page number"
+// @Param per_page query int false "Items per page"
 // @Success 200 {object} models.Users
 // @Header 200  {object} X-Pagination "pagination information"
 // @Failure 500 {object} FormattedError
@@ -92,7 +94,7 @@ func UsersShow(c buffalo.Context) error {
 type LightUser struct {
 	Login string `json:"login"` // User login (must be unique)
 	Info  string `json:"info"`  // Optional user info
-	Admin string `json:"admin"` // User has admin powers
+	Admin bool   `json:"admin"` // User has admin powers
 }
 
 // UsersCreate creates a new user

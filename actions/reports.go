@@ -66,6 +66,8 @@ func ReportsCreate(c buffalo.Context) error {
 // @Description List available reports (requires admin credentials)
 // @security Bearer
 // @Produce  json
+// @Param page query int false "Page number"
+// @Param per_page query int false "Items per page"
 // @Success 200 {object} models.Reports
 // @Header 200  {object} X-Pagination "pagination information"
 // @Failure 401 {object} FormattedError
