@@ -2,22 +2,82 @@
 
 This is a toy social network-like REST API written in Golang, using Buffalo.
 
-# Build & run
+This project is actually a recruitement test. Requirements were to build an API allowing:
 
-`docker-compose up` should do the trick. :)
+* Friend requests & friendship
+* Reporting users to moderation
+* Bonus: role-based visibility of information.
 
-However if you want to use the docker image independently, you should pass the following environment variables to
-the container:
+Given a time-frame of 10 hours (1 week's worth of spare time).
 
-* `JWT_SECRET`: secret used to sign JSON Web Tokens.
-* `DATABASE_URL`: full URL to PostgreSQL database.
+# Running image from Docker Hub
 
-For example, here are the default values I'm using in my `.env` file:
+Using the following `docker-compose.yml` file:
 
+```yaml
+version: "3.7"
+services:
+    web:
+        image: neuware/microsocial:latest
+        environment:
+        - JWT_SECRET=microsocial_secret
+        - DATABASE_URL=postgres://buffalo:buffalo@db:5432/microsocial?sslmode=disable
+        depends_on:
+        - db
+        ports:
+        - "3000:3000"
+    db:
+        image: postgres:11
+        environment:
+        - POSTGRES_USER=buffalo
+        - POSTGRES_PASSWORD=buffalo
+        - POSTGRES_DB=microsocial
+        ports:
+        - "5432:5432"
 ```
-JWT_SECRET=microsocial_secret
-DATABASE_URL=postgres://buffalo:buffalo@db:5432/microsocial?sslmode=disable
-```
+
+* **During first launch**, first initialize the database by running `docker-compose up db`,
+and wait until the DB is ready before interrupting it.
+* Then, run `docker-compose up` to get the app up and running.
+
+# Building from source
+
+`docker-compose up` alone should do the trick, because the database will have plenty of time
+to initialize as you build the app container. :)
+
+# Discussing design choices
+
+Given the time-frame (and the fact that I'm no Go expert), I followed a KISS approach and
+strived for the simplest possible code to reach a 100% functional demo: no clever tricks,
+no fancy stuff, only the couple requested features and bonus with a stress on *usability*.
+
+Of course, this leaves room to improvement, and here are the three main things I think
+should be addressed next in a "real world" scenario:
+
+* **Friend requests are lost once accepted or declined**, because it makes it easier to
+  prevent accepted/declined friend requests to be "declined/accepted back". A more realistic
+  implementation would model this using a `status` column (`PENDING/ACCEPTED/DECLINED`) in the
+  `friend_requests` table, in order to keep a logged record of all events.
+* **Friendships are modelled using two distinct rows**, because, once again, it makes the rest of
+  the code much simpler to read and write. As one could read in
+[this StackOverflow thread](https://stackoverflow.com/questions/10807900/how-to-store-bidirectional-relationships-in-a-rdbms-like-mysql),
+  there's actually a tie between "two rows, one index" or "one row, two indexes".
+  The main drawback of the chosen path is that it could lead to inconsistent state in the database
+  if we don't give it enough care: here, all "writes" or "deletes" in the `friendships` table
+  manipulate **both rows** not only in the same transaction, but also **in the same query**, putting
+  all the trust on the robustness of PostgreSQL transactions. IMO, it's the most reasonable choice,
+  but I'm open to discussion and would gladly change my mind if convinced otherwise.
+* Most importantly, **displaying a user's profile is the costliest action**, because it can yield up
+  to 5 database queries to recover friend requests & friends (when a user visits his own profile), and
+  moderation reports (when an admin visits a user profile). Note that these aren't the most likely
+  use-case (the most likely case, "user A visits user B", takes only 1 DB query).
+  I couldn't use "eager" fetches here (parameterizing the query as I'm checking the
+  user's credentials), because each of the subrequests is already "eager" in its own right, in order
+  to return human-friendly data. Given time and opportunity, I would advise to monitor how this performs
+  "in real life", and if this operation were a bottleneck, my first approach wouldn't be to modify the
+  code, but to start with an `If-Modified-Since` caching system that would benefit the whole API anyway
+  (but that's the point of REST, isn't it?). I didn't do it here because, of course, there is nothing
+  "small" or "easy" about caching, and it would be premature optimization anyway.
 
 # Swagger documentation
 
@@ -305,12 +365,6 @@ $ curl -H $AS_ALICE http://$URL/users/$ALICE_ID | python3 -m json.tool
 
 Once a friend request is accepted (resp. declined) it can't be "declined (resp. accepted) back".
 
-**Note:** This bidirectional, many-to-many relationship, is modelled as two distinct
-lines within the same table (one for Bob to Alice, and one for Alice to Bob).
-This design choice is debatable (friendships take more space in the database),
-however it results in simpler code. [More info
-here](https://stackoverflow.com/questions/10807900/how-to-store-bidirectional-relationships-in-a-rdbms-like-mysql).
-
 Friendships are also private:
 
 * Bob can't see Alice's friends, even if he's part of them.
@@ -408,6 +462,3 @@ $ curl -H $AS_BOB http://localhost:3000/users/$BOB_ID |python3 -m json.tool
 }
 ```
 
-# Discussing design choices
-
-**[TBD]**

@@ -3,8 +3,9 @@ services:
     web:
         build:
             context: .
-        env_file:
-        - .env
+        environment:
+        - JWT_SECRET=microsocial_secret
+        - DATABASE_URL=postgres://buffalo:buffalo@db:5432/microsocial?sslmode=disable
         depends_on:
         - db
         ports:

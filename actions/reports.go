@@ -67,6 +67,7 @@ func ReportsCreate(c buffalo.Context) error {
 // @security Bearer
 // @Produce  json
 // @Success 200 {object} models.Reports
+// @Header 200  {object} X-Pagination "pagination information"
 // @Failure 401 {object} FormattedError
 // @Failure 403 {object} FormattedError
 // @Router /reports/ [get]

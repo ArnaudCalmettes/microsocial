@@ -4,9 +4,10 @@ FROM gobuffalo/buffalo:v0.14.10 as builder
 
 RUN mkdir -p $GOPATH/src/github.com/ArnaudCalmettes/microsocial
 WORKDIR $GOPATH/src/github.com/ArnaudCalmettes/microsocial
-RUN go get github.com/gobuffalo/packr/v2
+RUN go get github.com/gobuffalo/packr/v2 github.com/swaggo/swag/cmd/swag
 
 ADD . .
+RUN swag init -g actions/app.go
 RUN go get -v ./...
 RUN buffalo build --static -o /bin/app
 
