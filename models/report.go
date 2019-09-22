@@ -10,6 +10,11 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+// "Light" report model used by users during creation.
+type LightReport struct {
+	Info string `json:"info"` // Reason why the user is reported.
+}
+
 // Report model struct
 type Report struct {
 	ID        uuid.UUID `json:"id" db:"id"`
@@ -19,6 +24,13 @@ type Report struct {
 	AboutID   uuid.UUID `json:"-" db:"about_id"`
 	About     *User     `json:"about,omitempty" db:"-" belongs_to:"user"`
 	Info      string    `json:"info" db:"info"`
+}
+
+// ReportFromLight Creates a full Report from its "light" version
+func ReportFromLight(light *LightReport) *Report {
+	return &Report{
+		Info: light.Info,
+	}
 }
 
 // String is not required by pop and may be deleted

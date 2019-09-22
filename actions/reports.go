@@ -7,10 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type LightReport struct {
-	Info string `json:"info"`
-}
-
 // ReportsCreate reports given user
 // @Summary Report a user to the moderators
 // @Description Report a user to the moderators
@@ -18,7 +14,7 @@ type LightReport struct {
 // @Accept  json
 // @Produce  json
 // @Param user_id path string true "The user's ID"
-// @Param userinfo body actions.LightReport true "Mandatory report information"
+// @Param userinfo body models.LightReport true "Mandatory report information"
 // @Success 201 {object} models.Report
 // @Failure 400 {object} FormattedError
 // @Failure 401 {object} FormattedError
@@ -31,10 +27,11 @@ func ReportsCreate(c buffalo.Context) error {
 		return errors.WithStack(errors.New("No transaction found"))
 	}
 
-	report := &models.Report{}
-	if err := c.Bind(report); err != nil {
+	light_report := &models.LightReport{}
+	if err := c.Bind(light_report); err != nil {
 		return c.Error(400, err)
 	}
+	report := models.ReportFromLight(light_report)
 
 	user := &models.User{}
 	if err := tx.Find(user, c.Param("user_id")); err != nil {

@@ -7,10 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type LightFriendRequest struct {
-	Message string `json:"message"`
-}
-
 // FriendRequestsCreate places a new friend request.
 // @Summary Send a friend request to a user
 // @Description Send a friend request to a user
@@ -18,7 +14,7 @@ type LightFriendRequest struct {
 // @Accept  json
 // @Produce  json
 // @Param user_id path string true "The user's ID"
-// @Param message body actions.LightFriendRequest true "message associated to the friend request"
+// @Param message body models.LightFriendRequest true "message associated to the friend request"
 // @Success 200 {object} models.FriendRequest
 // @Failure 400 {object} FormattedError
 // @Failure 401 {object} FormattedError
@@ -37,11 +33,12 @@ func FriendRequestsCreate(c buffalo.Context) error {
 		return c.Error(404, errors.New("Not Found"))
 	}
 
-	req := &models.FriendRequest{}
-	if err := c.Bind(req); err != nil {
+	light_req := &models.LightFriendRequest{}
+	if err := c.Bind(light_req); err != nil {
 		return c.Error(400, err)
 	}
 
+	req := models.FriendRequestFromLight(light_req)
 	req.FromID = auth.ID
 	req.ToID = user.ID
 

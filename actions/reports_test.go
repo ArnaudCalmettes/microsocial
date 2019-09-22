@@ -8,7 +8,7 @@ import (
 )
 
 func (as *ActionSuite) Test_Reports_Create() {
-	user, user_token := as.createUserAndToken(false)
+	_, user_token := as.createUserAndToken(false)
 	subject, subject_token := as.createUserAndToken(false)
 	payload := map[string]string{"info": "This user is a jerk!"}
 
@@ -30,8 +30,6 @@ func (as *ActionSuite) Test_Reports_Create() {
 	err := json.Unmarshal(resp.Body.Bytes(), report)
 	as.NoError(err)
 	as.False(report.CreatedAt.IsZero())
-	as.Equal(user.ID, report.ByID)
-	as.Equal(subject.ID, report.AboutID)
 	as.Equal("This user is a jerk!", report.Info)
 
 	count, err := as.DB.Count("reports")

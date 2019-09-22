@@ -11,6 +11,11 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+// "Light" FriendRequest model used for friend request creation
+type LightFriendRequest struct {
+	Message string `json:"message"` // Optional message for the friend request
+}
+
 // FriendRequest model struct
 type FriendRequest struct {
 	ID        uuid.UUID `json:"id" db:"id"`
@@ -27,6 +32,13 @@ type Friendship struct {
 	CreatedAt time.Time `db:"created_at"`
 	UserID    uuid.UUID `db:"user_id"`
 	FriendID  uuid.UUID `db:"friend_id"`
+}
+
+// FriendRequestFromLight Creates a new friend request from its "light" version
+func FriendRequestFromLight(light *LightFriendRequest) *FriendRequest {
+	return &FriendRequest{
+		Message: light.Message,
+	}
 }
 
 // String is not required by pop and may be deleted

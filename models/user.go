@@ -10,6 +10,13 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+// "Light" user model accepted for user creation and modification
+type LightUser struct {
+	Login string `json:"login"` // Unique login
+	Info  string `json:"info"`  // Optional user information
+	Admin bool   `json:"admin"` // User has admin credentials
+}
+
 // User model struct
 type User struct {
 	ID          uuid.UUID      `json:"id" db:"id" fake:"skip"`
@@ -22,6 +29,15 @@ type User struct {
 	OutRequests FriendRequests `json:"pending_requests,omitempty" db:"-" order_by:"created_at desc"`
 	InRequests  FriendRequests `json:"incoming_requests,omitempty" db:"-" order_by:"created_at desc"`
 	Reports     Reports        `json:"reports,omitempty" db:"-" order_by:"created_at desc"`
+}
+
+// UserFromLight creates a User model from its "light" version
+func UserFromLight(light *LightUser) *User {
+	return &User{
+		Login: light.Login,
+		Info:  light.Info,
+		Admin: light.Admin,
+	}
 }
 
 // String converts a User to a JSON string

@@ -90,19 +90,12 @@ func UsersShow(c buffalo.Context) error {
 
 }
 
-// Model accepted for user creation and modification
-type LightUser struct {
-	Login string `json:"login"` // User login (must be unique)
-	Info  string `json:"info"`  // Optional user info
-	Admin bool   `json:"admin"` // User has admin powers
-}
-
 // UsersCreate creates a new user
 // @Summary Create a new user
 // @Description Creates a new user
 // @Accept  json
 // @Produce  json
-// @Param userinfo body actions.LightUser true "login (mandatory), info, admin"
+// @Param userinfo body models.LightUser true "login (mandatory), info, admin"
 // @Success 201 {object} models.User
 // @Failure 400 {object} FormattedError
 // @Failure 409 {object} FormattedError "The login is already taken"
@@ -113,11 +106,12 @@ func UsersCreate(c buffalo.Context) error {
 		return errors.WithStack(errors.New("no transaction found"))
 	}
 
-	user := &models.User{}
-	if err := c.Bind(user); err != nil {
+	light_user := &models.LightUser{}
+	if err := c.Bind(light_user); err != nil {
 		return c.Error(400, err)
 	}
 
+	user := models.UserFromLight(light_user)
 	verrs, err := user.Create(tx)
 	if err != nil {
 		return errors.WithStack(err)
@@ -136,7 +130,7 @@ func UsersCreate(c buffalo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param user_id path string true "The user ID"
-// @Param userinfo body actions.LightUser true "New user information"
+// @Param userinfo body models.LightUser true "New user information"
 // @Success 200 {object} models.User
 // @Failure 400 {object} FormattedError
 // @Failure 401 {object} FormattedError
